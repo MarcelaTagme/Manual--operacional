@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual Operacional - Ativações e Processos</title>
+    <div style="text-align: center; margin-bottom: 5px;">
+        <div style="text-align: center; margin-bottom: 5px;">
+            <img src="tagmepng.png" alt="Logo Tagme" style="width: 160px;">
+        </div>
+    </div>
+
+    <style> 
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #4a5d5a 0%, #3a4b47 100%);
+            color: #1f2937;
+            overflow-x: hidden;
+        }
+
+        .presentation-container {
+            width: 100vw;
+            min-height: 100vh;
+            position: relative;
+            padding-bottom: 100px; /* Espaço para os controles */
+        }
+
+        .slide {
+            width: 100%;
+            min-height: calc(100vh - 100px);
+            display: none;
+            padding: 20px 20px 120px 20px; /* Padding bottom maior para evitar sobreposição */
+            background: white;
+            position: relative;
+            animation: slideIn 0.5s ease-in-out;
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        h1 {
+            font-size: 3rem;
+            color: #111827;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+        }
+
+        h2 {
+            font-size: 2.25rem;
+            color: #FF5700;
+            margin-bottom: 2rem;
+            text-align: center;
+            font-weight: 600;
+            letter-spacing: -0.015em;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            color: #374151;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        h4 {
+            font-size: 1.25rem;
+            color: #4b5563;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #7f8c8d;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .content {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 20px 0;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .card {
+            background: #ffffff;
+            padding: 2rem;
+            border-radius: 16px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .card.critical {
+            background: #fef2f2;
+            border: 1px solid #FF5700;
+        }
+
+        .card.success {
+            background: #f0fdf4;
+            border: 1px solid #4a5d5a;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            margin-right: 1rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .bradesco-icon { background: #dc2626; }
+        .itau-icon { background: #FF5700; }
+        .latam-icon { background: #4a5d5a; }
+        .esfera-icon { background: #374151; }
+        .bb-icon { background: #eab308; color: #1f2937 !important; }
+        .unico-icon { background: #4a5d5a; }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #ecf0f1;
+            display: flex;
+            align-items: center;
+        }
+
+        li:before {
+            content: "✓";
+            color: white;
+            font-weight: bold;
+            margin-right: 1rem;
+            background: #FF5700;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+
+        li.critical:before {
+            content: "⚠";
+            background: #4a5d5a;
+            color: white;
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 1rem;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 12px 24px;
+            border-radius: 50px;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        button {
+            padding: 14px 28px;
+            background: #FF5700;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px 0 rgba(255, 87, 0, 0.25);
+            white-space: nowrap;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        button:hover:not(:disabled) {
+            background: #e64a00;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px 0 rgba(255, 87, 0, 0.35);
+        }
+
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            opacity: 0.6;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .slide-counter {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #FF5700, #4a5d5a);
+            transition: width 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(255, 87, 0, 0.3);
+        }
+
+        .icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .highlight {
+            background: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin: 1rem 0;
+            border: 1px solid #e2e8f0;
+        }
+
+        .center-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            min-height: calc(100vh - 140px);
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .full-width-card {
+            grid-column: 1 / -1;
+        }
+
+        .download-info {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 87, 0, 0.9);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            z-index: 1000;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+        }
+
+        .url-box {
+            background: #f1f5f9;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            margin: 0.5rem 0;
+            border: 1px solid #cbd5e1;
+            word-break: break-all;
+        }
+
+        .step-badge {
+            background: #FF5700;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+
+        .step-badge.critical {
+            background: #4a5d5a;
+        }
+
+        /* Otimizações para Mobile */
+        @media (max-width: 768px) {
+            .presentation-container {
+                padding-bottom: 120px;
+            }
+
+            .slide { 
+                padding: 15px 15px 140px 15px;
+                min-height: calc(100vh - 120px);
+            }
+
+            h1 { font-size: 2.2rem; margin-bottom: 1rem; }
+            h2 { font-size: 1.8rem; margin-bottom: 1.5rem; }
+            h3 { font-size: 1.3rem; margin-bottom: 0.8rem; }
+            h4 { font-size: 1.1rem; margin-bottom: 0.6rem; }
+            .subtitle { font-size: 1rem; }
+            .grid { grid-template-columns: 1fr; gap: 1rem; margin: 1rem 0; }
+            .card { padding: 1.5rem; }
+
+            .controls { 
+                bottom: 10px; 
+                padding: 10px 16px; 
+                gap: 0.8rem;
+                left: 10px;
+                right: 10px;
+                transform: none;
+                border-radius: 16px;
+            }
+
+            button { 
+                padding: 12px 20px; 
+                font-size: 0.9rem; 
+                border-radius: 10px;
+                min-height: 44px;
+                flex: 1;
+            }
+
+            .slide-counter { 
+                top: 10px; 
+                right: 10px; 
+                padding: 8px 15px; 
+                font-size: 0.8rem; 
+            }
+
+            .download-info { 
+                top: 10px; 
+                left: 10px; 
+                padding: 8px 12px; 
+                font-size: 0.7rem; 
+            }
+
+            .center-content { 
+                padding: 20px 10px;
+                min-height: calc(100vh - 160px);
+            }
+
+            .content { padding: 10px 0; }
+            .card-icon { width: 35px; height: 35px; font-size: 16px; }
+            .icon { font-size: 2.5rem; margin-bottom: 0.8rem; }
+            .highlight { padding: 1rem; margin: 0.8rem 0; }
+            li { padding: 0.4rem 0; font-size: 0.95rem; }
+            li:before { width: 20px; height: 20px; font-size: 0.7rem; margin-right: 0.8rem; }
+        }
+
+        @media (max-width: 480px) {
+            .presentation-container {
+                padding-bottom: 140px;
+            }
+
+            .slide { 
+                padding: 10px 10px 160px 10px;
+                min-height: calc(100vh - 140px);
+            }
+
+            h1 { font-size: 1.9rem; }
+            h2 { font-size: 1.6rem; }
+            .card { padding: 1.2rem; }
+
+            .controls {
+                bottom: 8px;
+                left: 8px;
+                right: 8px;
+                padding: 8px 12px;
+                gap: 0.6rem;
+            }
+
+            button { 
+                padding: 10px 16px; 
+                font-size: 0.85rem;
+                min-height: 40px;
+            }
+        }
+
+        /* Ajustes para dispositivos com altura pequena */
+        @media (max-height: 600px) {
+            .slide {
+                min-height: auto;
+                padding-bottom: 100px;
+            }
+
+            .center-content {
+                min-height: auto;
+                padding: 20px 10px;
+            }
+
+            .controls {
+                bottom: 8px;
+                padding: 8px 16px;
+            }
+
+            button {
+                padding: 8px 16px;
+                font-size: 0.85rem;
+                min-height: 36px;
+            }
+        }
+
+        @media (hover: none) and (pointer: coarse) {
+            button { 
+                min-height: 48px; 
+                min-width: 88px; 
+            }
+            .card { transition: none; }
+            .card:hover { 
+                transform: none; 
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); 
+            }
+        }
+
+        /* Evitar scroll horizontal */
+        body, html {
+            overflow-x: hidden;
+            max-width: 100vw;
+        }
+
+        .slide {
+            max-width: 100vw;
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        <div class="progress-bar" id="progressBar"></div>
+        <div class="slide-counter">
+            <span id="slideNumber">1</span> / <span id="totalSlides">6</span>
+        </div>
+        <div class="download-info">
+            Manual Operacional
+        </div>
+
+        <!-- Slide 1: Fluxo de Implantação -->
+        <div class="slide active">
+            <div class="content">
+                <div class="tagme-logo"></div>
+                <h2>Fluxo de Implantação - Pré-Ativação</h2>
+                <div class="highlight">
+                    <h3>Antes de fazer qualquer ativação </h3>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 2rem;">
+                    <div class="card">
+                        <div class="step-badge">ETAPA 1</div>
+                        <h4>Contrato Assinado (Wufoo)</h4>
+                        <ul>
+                            <li><strong>Solicitar:</strong> 3 a 4 fotos de pratos do restaurante</li>
+                            <li><strong>Instagram:</strong> Buscar fotos complementares de boa qualidade</li>
+                            <li><strong>Resolução:</strong> Fotos com boa resolução obrigatória</li>
+                            <li><strong>Variedade:</strong> Diferentes pratos para mostrar cardápio</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <div class="step-badge critical">ETAPA 2</div>
+                        <h4>Monday.com - Board Implantação</h4>
+                        <ul>
+                            <li><strong>Upload:</strong> Subir as fotos selecionadas</li>
+                            <li><strong>Contrato:</strong> Incluir contrato assinado</li>
+                            <li><strong>Informações:</strong> Adicionar dados do restaurante</li>
+                            <li><strong>Fluxo:</strong> Seguir para implantação técnica</li>
+                        </ul>
+                    </div>
+                    <div class="card critical">
+                        <div class="step-badge">ETAPA 3</div>
+                        <h4>Configurações Técnicas da Implantação</h4>
+                        <ul>
+                            <li class="critical"><strong>Recorte das fotos:</strong> Padronização para plataforma</li>
+                            <li><strong>Latitude e longitude:</strong> Localização exata do restaurante</li>
+                            <li><strong>Tipo:</strong> "Sofisticado" ou "Casual" (impacta apresentação)</li>
+                            <li><strong>Horário completo:</strong> Funcionamento detalhado</li>
+                            <li><strong>Culinária:</strong> Tipo (italiana, japonesa, brasileira, etc.)</li>
+                            <li class="critical"><strong>Menu Personnalité:</strong> Criação dos 2 menus degustação</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card success full-width-card">
+                    <h4>⚠️ SÓ APÓS ESSAS 3 ETAPAS → Iniciar processo de ativação nos parceiros</h4>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: Processo de Ativação -->
+        <div class="slide">
+            <div class="content">
+                <h2>Processos de Ativação</h2>
+                <div class="card success full-width-card">
+                    <h3>MESMO FLUXO PARA TODOS OS PARCEIROS</h3>
+                    <p>O que muda são apenas as <strong>configurações específicas</strong> no Channels Admin</p>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 1.5rem; margin-top: 2rem;">
+                    <div class="card">
+                        <div class="step-badge">PASSO 1</div>
+                        <h4>Admin Tagme</h4>
+                        <div class="url-box">https://admin.tagme.com.br/admin</div>
+                        <ul>
+                            <li>Verificar configurações da implantação</li>
+                            <li><strong>Ativar botões dos parceiros</strong> conforme contrato</li>
+                            <li>Validar se todas as configurações estão corretas</li>
+                        </ul>
+                    </div>
+                    <div class="card critical">
+                        <div class="step-badge critical">PASSO 2</div>
+                        <h4>Channels Admin - CRÍTICO</h4>
+                        <div class="url-box">https://channelsadmin.tagme.com.br/home</div>
+                        <ul>
+                            <li>Acessar <strong>"Gestão de Venues (por parceiro)"</strong></li>
+                            <li><strong>Selecionar o parceiro específico</strong> (Bradesco, Itaú, etc.)</li>
+                            <li class="critical"><strong>AQUI que muda:</strong> Configurações específicas por parceiro</li>
+                            <li>Configurar horários e mecânicas específicas</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <div class="step-badge">PASSO 3</div>
+                        <h4>Waitlist - Reservas</h4>
+                        <div class="url-box">https://waitlist.tagme.com.br/login</div>
+                        <ul>
+                            <li><strong>Clonar horários</strong> das reservas online</li>
+                            <li>Configurar reservas dentro do parceiro selecionado</li>
+                            <li>Sincronizar com sistema principal</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Interface Channels Admin -->
+        <div class="slide">
+            <div class="content">
+                <h2>Interface Channels Admin</h2>
+                <div class="highlight">
+                    <h3>Tela Principal - Após Login</h3>
+                    <p>Você verá estes ícones principais para gestão:</p>
+                </div>
+                <div class="grid">
+                    <div class="card">
+                        <div style="display: flex; align-items: center; margin-bottom: 1rem;">
+                            <div style="background: #f97316; color: white; padding: 8px; border-radius: 6px; margin-right: 0.5rem;">⭐</div>
+                            <h4>Venue (pagamento, checkin)</h4>
+                        </div>
+                        <p>Gestão básica do estabelecimento</p>
+                    </div>
+                    <div class="card critical">
+                        <div style="display: flex; align-items: center; margin-bottom: 1rem;">
+                            <div style="background: #f97316; color: white; padding: 8px; border-radius: 6px; margin-right: 0.5rem;">⭐</div>
+                            <h4>Gestão de Venues (por parceiro)</h4>
+                        </div>
+                        <p><strong>PRINCIPAL:</strong> Configuração específica por parceria</p>
+                        <p><strong>É AQUI que acontece o trabalho crítico!</strong></p>
+                    </div>
+                    <div class="card">
+                        <div style="display: flex; align-items: center; margin-bottom: 1rem;">
+                            <div style="background: #f97316; color: white; padding: 8px; border-radius: 6px; margin-right: 0.5rem;">⭐</div>
+                            <h4>Sincronizar Venue (usuários, endereço)</h4>
+                        </div>
+                        <p>Sincronização de dados entre sistemas</p>
+                    </div>
+                </div>
+                <div class="card success full-width-card">
+                    <h4>Sequência de Trabalho</h4>
+                    <p>"Gestão de Venues (por parceiro)" → Escolher parceiro específico → Configurar mecânicas</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Configurações Específicas por Parceiro -->
+        <div class="slide">
+            <div class="content">
+                <h2>Configurações Específicas - Channels Admin</h2>
+                <div class="highlight">
+                    <h3>PONTO CRÍTICO: O que muda para cada parceiro</h3>
+                    <p>Mesmo processo, configurações diferentes no <strong>Channels Admin</strong></p>
+                </div>
+                <div class="grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon bradesco-icon">B</div>
+                            <h4>Bradesco Prime</h4>
+                        </div>
+                        <ul>
+                            <li>10% ou 15% desconto (conforme contrato)</li>
+                            <li>Mesa VIP: espumante + água + café (R$ 45)</li>
+                            <li>Entrada opcional (R$ 22,50)</li>
+                            <li>Sobremesa Infinite (R$ 24)</li>
+                            <li>Celebrations: Vouchers Amex</li>
+                            <li>Platinum: R$ 300 | Centurion: R$ 1.000</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon itau-icon">I</div>
+                            <h4>Itaú Personnalité</h4>
+                        </div>
+                        <ul>
+                            <li>Menu 1: Livre criação (R$ 135)</li>
+                            <li>Menu 2: Vegetariano (R$ 135)</li>
+                            <li>Vinho selecionado (R$ 105)</li>
+                            <li>Descrição detalhada dos pratos</li>
+                            <li>Reembolso 95% vouchers/pontos</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card success full-width-card">
+                    <h4>Programas de Pontos (Mesma configuração)</h4>
+                    <div style="display: flex; align-items: center; gap: 1rem; margin: 1rem 0;">
+                        <div class="card-icon latam-icon" style="width: 24px; height: 24px;">L</div>
+                        <div class="card-icon esfera-icon" style="width: 24px; height: 24px;">E</div>
+                        <div class="card-icon bb-icon" style="width: 24px; height: 24px;">BB</div>
+                        <div class="card-icon unico-icon" style="width: 24px; height: 24px;">U</div>
+                    </div>
+                    <ul>
+                        <li>Mobile payment obrigatório</li>
+                        <li>% de pontos por real gasto (configurável)</li>
+                        <li>Repasse automático em 30 dias</li>
+                        <li>Taxa: 2,79% + R$ 0,79/transação</li>
+                    </ul>
+                </div>
+                <div class="card critical full-width-card">
+                    <h4>🎯 Lembre-se: Use sempre os checklists e documente tudo no Monday.com</h4>
+                    <p>Em caso de dúvidas, sempre escalate antes de finalizar qualquer ativação</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Configuração Bradesco Detalhada -->
+        <div class="slide">
+            <div class="content">
+                <h2>Configuração Bradesco - Channels Admin</h2>
+                <div class="card critical full-width-card">
+                    <h3>CAMPOS OBRIGATÓRIOS - Configuração Detalhada</h3>
+                    <p>Como preencher EXATAMENTE os campos no Channels Admin</p>
+                </div>
+                
+                <div class="grid">
+                    <div class="card">
+                        <h4>Percentual de Desconto</h4>
+                        <ul>
+                            <li><strong>Campo:</strong> "Desconto"</li>
+                            <li><strong>Valor:</strong> 10% ou 15% (conforme contrato)</li>
+                            <li><strong>Verificar:</strong> No contrato assinado</li>
+                            <li class="critical">Sempre conferir o percentual antes de salvar</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>Escolha do Benefício</h4>
+                        <ul>
+                            <li><strong>OPÇÃO A:</strong> Entrada (R$ 22,50)</li>
+                            <li><strong>OPÇÃO B:</strong> Mesa VIP Espumante (R$ 45,00)</li>
+                            <li class="critical">Só uma opção por restaurante</li>
+                            <li><strong>Definido:</strong> Pelo restaurante no contrato</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card critical">
+                    <h4>SE ESCOLHEU: ENTRADA (R$ 22,50)</h4>
+                    <p><strong>Campo "Descrição Longa":</strong></p>
+                    <div style="background: #f1f5f9; padding: 1rem; border-radius: 8px; margin: 1rem 0; font-size: 0.9rem; border: 1px solid #cbd5e1;">
+                        <strong>Entrada a escolha do restaurante</strong><br><br>
+                        Amenidades da Mesa VIP podem variar de acordo com cada restaurante e são oferecidas mediante reserva pelo aplicativo, site ou Concierge do seu cartão. No caso de ruptura de estoque, o estabelecimento reserva-se o direito de oferecer produtos correspondentes disponíveis. A entrada é a escolha do Restaurante. Somente uma entrada por mesa, por reserva.
+                    </div>
+                </div>
+
+                <div class="card critical">
+                    <h4>SE ESCOLHEU: MESA VIP ESPUMANTE (R$ 45,00)</h4>
+                    <p><strong>Campo "Descrição Longa":</strong></p>
+                    <div style="background: #f1f5f9; padding: 1rem; border-radius: 8px; margin: 1rem 0; font-size: 0.9rem; border: 1px solid #cbd5e1;">
+                        <strong>Mesa VIP Espumante</strong><br>
+                        2 taças de espumante, 1 garrafa de água e 2 cafés<br><br>
+                        Amenidades da Mesa VIP podem variar de acordo com cada restaurante e são oferecidas mediante reserva pelo aplicativo, site ou Concierge do seu cartão. No caso de ruptura de estoque, o estabelecimento reserva-se o direito de oferecer produtos correspondentes disponíveis. As 2 taças de espumante, 1 garrafa de água e 2 cafés são limitadas para até duas pessoas.
+                    </div>
+                </div>
+
+                <div class="card success full-width-card">
+                    <h4>⚠️ IMPORTANTE: Copie e cole os textos EXATAMENTE como mostrado acima</h4>
+                    <p>Não altere vírgulas, espaços ou pontuação. São textos oficiais aprovados pelo Bradesco.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Configuração Programas de Pontos -->
+        <div class="slide">
+            <div class="content">
+                <h2>Configuração - Programas de Acúmulo de Pontos</h2>
+                <div class="card success full-width-card">
+                    <h3>MESMA CONFIGURAÇÃO para os 4 programas</h3>
+                    <div style="display: flex; justify-content: center; gap: 2rem; margin: 1rem 0; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center;">
+                            <div class="card-icon latam-icon" style="width: 32px; height: 32px; margin-right: 0.5rem;">L</div>
+                            <strong>Latam Pass</strong>
+                        </div>
+                        <div style="display: flex; align-items: center;">
+                            <div class="card-icon esfera-icon" style="width: 32px; height: 32px; margin-right: 0.5rem;">E</div>
+                            <strong>Esfera Santander</strong>
+                        </div>
+                        <div style="display: flex; align-items: center;">
+                            <div class="card-icon bb-icon" style="width: 32px; height: 32px; margin-right: 0.5rem;">BB</div>
+                            <strong>BB Gastronomia</strong>
+                        </div>
+                        <div style="display: flex; align-items: center;">
+                            <div class="card-icon unico-icon" style="width: 32px; height: 32px; margin-right: 0.5rem;">U</div>
+                            <strong>Único Gastronomia</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card critical">
+                    <h4>TABELA DE PONTOS - Conferir no Contrato</h4>
+                    <div style="background: #f1f5f9; padding: 1rem; border-radius: 8px; margin: 1rem 0; font-size: 0.9rem;">
+                        <strong>SANTANDER ESFERA E UNICRED:</strong><br>
+                        • 8% desconto = 2 pontos por real gasto<br>
+                        • 11% desconto = 3 pontos por real gasto<br>
+                        • 14% desconto = 4 pontos por real gasto<br>
+                        • 16% desconto = 5 pontos por real gasto<br><br>
+                        
+                        <strong>BB GASTRONOMIA (LIVELO):</strong><br>
+                        • 5% desconto = 1 ponto por real gasto<br>
+                        • 9% desconto = 2 pontos por real gasto<br>
+                        • 13% desconto = 3 pontos por real gasto<br>
+                        • 17% desconto = 4 pontos por real gasto<br><br>
+                        
+                        <strong>LATAM PASS:</strong><br>
+                        • 10% desconto = 1 ponto por real gasto
+                    </div>
+                </div>
+
+                <div class="grid">
+                    <div class="card">
+                        <h4>Campo: PONTOS</h4>
+                        <ul>
+                            <li><strong>Descrição:</strong> "Pontos ganhos a cada Real pago pelo APP"</li>
+                            <li><strong>Valor:</strong> Conforme tabela acima</li>
+                            <li class="critical">Verificar no contrato qual % o restaurante escolheu</li>
+                            <li><strong>Exemplo:</strong> Se escolheu 8% = preencher "2"</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>Campo: CHECK-IN</h4>
+                        <ul>
+                            <li><strong>Ação:</strong> "Editar Check-In"</li>
+                            <li><strong>Configurar:</strong> Ativar check-in obrigatório</li>
+                            <li><strong>Importante:</strong> Cliente deve fazer check-in via app</li>
+                            <li><strong>Sem check-in:</strong> Não acumula pontos</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card critical">
+                    <h4>Campo: PAGAMENTO - CRÍTICO</h4>
+                    <p><strong>Ação:</strong> "Editar Pagamento" - Configurar retenções</p>
+                    <div style="background: #f1f5f9; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+                        <strong>EXEMPLO: Restaurante escolheu 8% total</strong><br><br>
+                        <strong>📋 Porcentagem da retenção do parceiro:</strong> 7%<br>
+                        <em>(Total menos 1% da Tagme = 8% - 1% = 7%)</em><br><br>
+                        
+                        <strong>📋 Porcentagem de retenção da Tagme:</strong> 1%<br>
+                        <em>(Sempre fixo em 1%)</em><br><br>
+                        
+                        <strong>📋 Porcentagem de gorjeta:</strong> 10%<br>
+                        <em>(Taxa de serviço do restaurante - informar no treinamento)</em>
+                    </div>
+                </div>
+
+                <div class="card success full-width-card">
+                    <h4>⚠️ FÓRMULA IMPORTANTE: Total do Contrato = Parceiro + Tagme</h4>
+                    <p><strong>Sempre:</strong> % Parceiro = (% Total do contrato) - 1% | % Tagme = 1% (fixo)</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="prevBtn" onclick="changeSlide(-1)">⬅ Anterior</button>
+            <button id="nextBtn" onclick="changeSlide(1)">Próximo ➡</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        document.getElementById('totalSlides').textContent = totalSlides;
+
+        function showSlide(n) {
+            slides.forEach(slide => slide.classList.remove('active'));
+            
+            if (n >= totalSlides) currentSlide = 0;
+            if (n < 0) currentSlide = totalSlides - 1;
+            
+            slides[currentSlide].classList.add('active');
+            
+            document.getElementById('slideNumber').textContent = currentSlide + 1;
+            const progress = ((currentSlide + 1) / totalSlides) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+            
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+        }
+
+        function changeSlide(n) {
+            currentSlide += n;
+            showSlide(currentSlide);
+        }
+
+        showSlide(0);
+
+        // Navegação por teclado
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                if (currentSlide < totalSlides - 1) {
+                    changeSlide(1);
+                }
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                if (currentSlide > 0) {
+                    changeSlide(-1);
+                }
+            }
+        });
+
+        // Navegação por touch/swipe
+        let startX = 0, startY = 0, distX = 0, distY = 0;
+        let threshold = 100, restraint = 100;
+
+        document.addEventListener('touchstart', function(e) {
+            startX = e.changedTouches[0].pageX;
+            startY = e.changedTouches[0].pageY;
+        }, false);
+
+        document.addEventListener('touchend', function(e) {
+            distX = e.changedTouches[0].pageX - startX;
+            distY = e.changedTouches[0].pageY - startY;
+            
+            if (Math.abs(distX) >= threshold && Math.abs(distY) <= restraint) {
+                if (distX > 0 && currentSlide > 0) {
+                    changeSlide(-1);
+                } else if (distX < 0 && currentSlide < totalSlides - 1) {
+                    changeSlide(1);
+                }
+            }
+        }, false);
+
+        // Prevenção de zoom no mobile
+        document.addEventListener('touchmove', function(e) {
+            if (e.scale !== 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // Log de informações
+        console.log('📊 Manual Operacional - Ativações e Processos');
+        console.log('🎯 6 slides operacionais');
+        console.log('⚡ Navegação: ← → swipe ou botões');
+        console.log('📱 Otimizado para mobile');
+        console.log('💾 Arquivo offline - funciona sem internet');
+    </script>
+</body>
+</html>
